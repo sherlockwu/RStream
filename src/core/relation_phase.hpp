@@ -71,6 +71,10 @@ namespace RStream {
 //			}
 
 
+                        std::cout << "Kan: join for update count: " << update_c << std::endl;
+	                auto start = std::chrono::high_resolution_clock::now();
+	                std::chrono::duration<double> diff;
+
 			std::vector<std::pair<long, std::tuple<int, long, long>>> tasks;
 			concurrent_queue<std::tuple<int, long, long>> * task_queue = new concurrent_queue<std::tuple<int, long, long>>(MAX_QUEUE_SIZE);
 
@@ -79,6 +83,7 @@ namespace RStream {
 				int fd_update = open((context.filename + "." + std::to_string(partition_id) + ".update_stream_" + std::to_string(in_update_stream)).c_str(), O_RDONLY);
 				long update_size = io_manager::get_filesize(fd_update);
 				int streaming_counter = update_size / (CHUNK_SIZE * sizeof(InUpdateType)) + 1;
+                                //std::cout << "update size: " << update_size << " streaming_counter: " << streaming_counter << std::endl;
 				assert((update_size % sizeof(InUpdateType)) == 0);
 
 				long valid_io_size = 0;
@@ -99,9 +104,14 @@ namespace RStream {
 
 			// sort tasks on size, larger size has a higher priority to run
 			std::sort(tasks.begin(), tasks.end());
+                        std::cout << "overall tasks: " << tasks.size() << std::endl;
+                        std::cout << "!!!!!!!!!!!!!!!" << std::endl;
 			for(int i = tasks.size() - 1; i >= 0; i--) {
 				task_queue->push(tasks.at(i).second);
 			}
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: devide tasks took : " << diff.count() << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
 
 			// allocate global buffers for shuffling
 			global_buffer<OutUpdateType> ** buffers_for_shuffle = buffer_manager<OutUpdateType>::get_global_buffers(context.num_partitions);
@@ -120,8 +130,15 @@ namespace RStream {
 			for(auto & t : exec_threads)
 				t.join();
 
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: exec tasks took : " << diff.count() << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
+
 			for(auto &t : write_threads)
 				t.join();
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: write out took : " << diff.count() << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
 
 			delete[] buffers_for_shuffle;
 			delete task_queue;
@@ -236,10 +253,15 @@ namespace RStream {
 			for(unsigned int i = 0; i < context.num_partitions; i++) {
 				assert(buffers_for_shuffle[i]->get_capacity() == BUFFER_CAPACITY);
 			}
+	// Kan
+        auto start = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff;
 
 			// pop from queue
 //			while(task_queue->test_pop_atomic(partition_id)){
 			while(task_queue->test_pop_atomic(one_task)){
+                        start = std::chrono::high_resolution_clock::now();
+
 				partition_id = std::get<0>(one_task);
 				chunk_offset = std::get<1>(one_task);
 				chunk_size = std::get<2>(one_task);
@@ -275,6 +297,10 @@ namespace RStream {
 				// edges are fully loaded into memory
 				char * edge_local_buf = new char[edge_file_size];
 				io_manager::read_from_file(fd_edge, edge_local_buf, edge_file_size, 0);
+                        
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: read took : " << diff.count() << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
 
 				// build edge hashmap
 				const int n_vertices = context.vertex_intervals[partition_id].second - context.vertex_intervals[partition_id].first + 1;
@@ -290,6 +316,9 @@ namespace RStream {
 //					edge_hashmap[i] = std::vector<VertexId>();
 
 				build_edge_hashmap(edge_local_buf, edge_hashmap, edge_file_size, vertex_start);
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: build hashmap took : " << diff.count() << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
 
 				long valid_io_size = 0;
 				long offset = 0;
@@ -306,6 +335,7 @@ namespace RStream {
 //						valid_io_size = IO_SIZE;
 						valid_io_size = IO_SIZE * sizeof(InUpdateType);
 
+                                        //std::cout << "Kan: valid io size: " << valid_io_size << std::endl;
 					assert(valid_io_size % sizeof(InUpdateType) == 0);
 //					Logger::print_thread_info_locked(std::to_string(counter) + "th streaming, start join of size "
 //							+ std::to_string(valid_io_size) + " with partition " + std::to_string(partition_id) + "\n");
@@ -318,13 +348,16 @@ namespace RStream {
 					for(long pos = 0; pos < valid_io_size; pos += sizeof(InUpdateType)) {
 						// get an update
 						InUpdateType * update = (InUpdateType*)(update_local_buf + pos);
+                                                //std::cout << "test " << *update << std::endl;
 
 						// update.target is edge.src, the key to index edge_hashmap
 						for(VertexId target : edge_hashmap[update->target - vertex_start]) {
 //							Edge * e = new Edge(update->target, target);
+                                                        //std::cout << "test again " << *update << target << std::endl;
 //							if(!filter(update, e)) {
 							if(!filter(update, update->target, target)) {
 	//							NewUpdateType * new_update = new NewUpdateType(update, target);
+                                                                //std::cout << "succeed:  " << *update << target << std::endl;
 
 								//TODO: generate join result
 //								char* join_result = reinterpret_cast<char*>(&update);
@@ -332,7 +365,7 @@ namespace RStream {
 								OutUpdateType * out_update = project_columns(update, update->target, target);
 //								std::cout << *e << std::endl;
 //								std::cout << *update << std::endl;
-//								std::cout << *out_update << std::endl;
+								//Kan: output out_update std::cout << *out_update << std::endl;
 
 								// insert into shuffle buffer accordingly
 //								int index = get_global_buffer_index(out_update);
@@ -349,6 +382,9 @@ namespace RStream {
 						}
 
 					}
+                        diff = std::chrono::high_resolution_clock::now() - start;
+	                std::cout << "Kan: stream and generate updates took : " << diff.count()  << " to handle #parts " << streaming_counter << std::endl;
+                        start = std::chrono::high_resolution_clock::now();
 
 //					Logger::print_thread_info_locked(std::to_string(counter) + "th streaming, finish join of size "
 //												+ std::to_string(valid_io_size) + " with partition " + std::to_string(partition_id) + "\n");

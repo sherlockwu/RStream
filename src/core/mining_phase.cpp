@@ -772,7 +772,7 @@ namespace RStream {
 						std::unordered_set<VertexId> vertices_set;
 						MTuple_join in_update_tuple(sizeof_in_tuple);
 						get_an_in_update(update_local_buf + pos, in_update_tuple, vertices_set);
-//						std::cout << in_update_tuple << std::endl;
+						std::cout << in_update_tuple << std::endl;
 
 						std::unordered_set<VertexId> set;
 //						set.reserve(vertices_set.size());
@@ -1213,7 +1213,7 @@ namespace RStream {
 					for(long pos = 0; pos < valid_io_size; pos += size_of_unit) {
 						// get an labeled edge
 						LabeledEdge e = *(LabeledEdge*)(edge_local_buf + pos);
-//						std::cout << e << std::endl;
+						std::cout << e << std::endl;
 
 						std::vector<Element_In_Tuple> out_update_tuple;
 						out_update_tuple.push_back(Element_In_Tuple(e.src, 0, e.src_label));
@@ -1221,6 +1221,7 @@ namespace RStream {
 
 						// shuffle on both src and target
 						if(!Pattern::is_automorphism_init(out_update_tuple)){
+                                                        std::cout << out_update_tuple[0] << out_update_tuple[1] << std::endl;
 							insert_tuple_to_buffer(partition_id, out_update_tuple, buffers_for_shuffle);
 						}
 					}

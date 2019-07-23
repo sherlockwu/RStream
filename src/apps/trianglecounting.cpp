@@ -88,7 +88,7 @@ public:
 //	bool filter(ROutUpdate_TriC * update, Edge * edge) {
 	bool filter(ROutUpdate_TriC * update, VertexId edge_src, VertexId edge_dst) {
 //		if(update->src1 != edge->target) return true;
-		if(update->src1 != edge_dst) return true;
+                if(update->src1 != edge_dst) return true;
 		return false;
 	}
 
@@ -137,27 +137,38 @@ int main(int argc, char ** argv) {
 
 	// get running time (wall time)
 	auto start = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff;
 
 	//scatter phase first to generate updates
+        diff = std::chrono::high_resolution_clock::now() - start;
+	std::cout << "Kan: scatter start: " << diff.count() << std::endl;
 	std::cout << "\n\n" << Logger::generate_log_del(std::string("scatter"), 1) << std::endl;
 	Scatter<BaseVertex, RInUpdate_TriC> scatter_phase(e);
 	Update_Stream in_stream = scatter_phase.scatter_no_vertex(generate_one_update);
 //	printUpdateStream<RInUpdate_TriC>(e.num_partitions, e.filename, in_stream);
 //
+        diff = std::chrono::high_resolution_clock::now() - start;
+	std::cout << "Kan: scatter end: " << diff.count() << std::endl;
 //	//relational phase 1
 	std::cout << "\n\n" << Logger::generate_log_del(std::string("first join"), 1) << std::endl;
+        diff = std::chrono::high_resolution_clock::now() - start;
+	std::cout << "Kan: join start: " << diff.count() << std::endl;
 	R1 r1(e);
 	Update_Stream out_stream_1 = r1.join(in_stream);
 //	printUpdateStream<ROutUpdate_TriC>(e.num_partitions, e.filename, out_stream_1);
 //
+        diff = std::chrono::high_resolution_clock::now() - start;
+	std::cout << "Kan: join end: " << diff.count() << std::endl;
 //	//relational phase 2
 	std::cout << "\n\n" << Logger::generate_log_del(std::string("second join"), 1) << std::endl;
+        diff = std::chrono::high_resolution_clock::now() - start;
+	std::cout << "Kan: join start: " << diff.count() << std::endl;
 	R2 r2(e);
 	Update_Stream out_stream_2 = r2.join(out_stream_1);
 //	printUpdateStream<ROutUpdate_TriC>(e.num_partitions, e.filename, out_stream_2);
 
 	auto end = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> diff = end - start;
+	diff = end - start;
 	std::cout << "Finish triangle counting. Running time : " << diff.count() << " s\n";
 
 	std::cout << "Triangle Counting : " << Global_Info::count(out_stream_2, sizeof(ROutUpdate_TriC), e) << std::endl;

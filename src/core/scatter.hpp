@@ -109,7 +109,8 @@ namespace RStream {
 
 		/* scatter without vertex data (for relational algebra use)*/
 		Update_Stream scatter_no_vertex(std::function<UpdateType*(Edge*)> generate_one_update) {
-			atomic_init();
+			std::cout << "Kan: get here to do first scatter, no vertex" << std::endl;
+                        atomic_init();
 
 //			Logger::print_thread_info_locked("--------------------Start Scatter Phase--------------------\n\n");
 
@@ -291,7 +292,8 @@ namespace RStream {
 
 			// pop from queue
 			while(task_queue->test_pop_atomic(partition_id)){
-				int fd = open((context.filename + "." + std::to_string(partition_id)).c_str(), O_RDONLY);
+				std::cout << "Kan: here is a exec thread to handle parition: " << partition_id << std::endl;
+                                int fd = open((context.filename + "." + std::to_string(partition_id)).c_str(), O_RDONLY);
 				assert(fd > 0);
 
 				// get file size
@@ -329,7 +331,7 @@ namespace RStream {
 					for(long pos = 0; pos < valid_io_size; pos += edge_unit) {
 						// get an edge
 						Edge * e = (Edge*)(local_buf + pos);
-	//					std::cout << e << std::endl;
+						//Kan: print the edge: std::cout << e->toString() << std::endl;
 
 						// gen one update
 						UpdateType * update_info = generate_one_update(e);
@@ -354,6 +356,7 @@ namespace RStream {
 
 		void scatter_consumer(global_buffer<UpdateType> ** buffers_for_shuffle, Update_Stream update_count) {
 			int counter = 0;
+                        std::cout << "Kan: get here to consume scatter results" << std::endl;
 
 			while(atomic_num_producers != 0) {
 				if(counter == context.num_partitions)
@@ -363,7 +366,7 @@ namespace RStream {
 
 //				const char * file_name = (context.filename + "." + std::to_string(i) + ".update_stream_" + std::to_string(update_count)).c_str();
 				std::string file_name_str = (context.filename + "." + std::to_string(i) + ".update_stream_" + std::to_string(update_count));
-
+                                //std::cout << "handling i: " << i << " update count: " << update_count << std::endl;
 				global_buffer<UpdateType>* g_buf = buffer_manager<UpdateType>::get_global_buffer(buffers_for_shuffle, context.num_partitions, i);
 				g_buf->flush(file_name_str, i);
 			}
@@ -372,6 +375,7 @@ namespace RStream {
 			while(true){
 				int i = --atomic_partition_number;
 				if(i >= 0){
+                                        //std::cout << "handling i: " << i << " update count: " << update_count << std::endl;
 
 					std::string file_name_str = (context.filename + "." + std::to_string(i) + ".update_stream_" + std::to_string(update_count));
 

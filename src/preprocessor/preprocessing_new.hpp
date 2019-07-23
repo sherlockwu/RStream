@@ -49,9 +49,10 @@ namespace RStream {
 
 		void run() {
 			std::cout << "\n\n" << Logger::generate_log_del(std::string("start preprocessing"), 1) << std::endl;
-
+                        std::cout << "======= Preprocessing in preprocessing_new.hpp" << std::endl;
 			// convert txt to binary
 			if(format == (int)FORMAT::EdgeList) {
+                                std::cout << "Get here to read in edge list" << std::endl;
 
 				// check if .binary exists already
 //				if(!FileUtil::file_exists(input + ".binary")) {
@@ -74,6 +75,7 @@ namespace RStream {
 				write_meta_file();
 
 			} else if(format == (int)FORMAT::AdjList) {
+                                std::cout << "Get here to read in adj list" << std::endl;
 
 				// check if .binary exists already
 //				if(!FileUtil::file_exists(input + ".binary")) {
@@ -117,7 +119,6 @@ namespace RStream {
 				t = strtok(NULL, delims);
 				assert(t != NULL);
 				VertexId to = atoi(t);
-
 				minVertexId = std::min(minVertexId, from);
 				minVertexId = std::min(minVertexId, to);
 				maxVertexId = std::max(maxVertexId, from);
@@ -165,6 +166,7 @@ namespace RStream {
 
 				} else {
 //					data = new Edge(from, to);
+                                        //std::cout << "get a edge: " << from << ":" << to << std::endl; 
 					Edge * edge = new Edge(from, to);
 					edge_unit =  sizeof(VertexId) * 2;
 //					std::memcpy(buf + pos, data, edge_unit);
@@ -311,8 +313,11 @@ namespace RStream {
 					intvalStart = intvalEnd + 1;
 				}
 			}
-
-			int fd = open((input + ".binary").c_str(), O_RDONLY);
+                        std::cout << "Kan: vertex interval: " << std::endl;
+                        for (int i = 0; i < intervals.size(); i++)
+                            std::cout << intervals.at(i).first << "," << intervals.at(i).second << std::endl; 
+			std::cout << "Kan: writing to binary: " << input + ".binary" << std::endl;
+                        int fd = open((input + ".binary").c_str(), O_RDONLY);
 			assert(fd > 0 );
 
 			// get file size
@@ -520,7 +525,8 @@ namespace RStream {
 
 
 					} else if(typeid(T) == typeid(LabeledEdge)) {
-						src_label = *(BYTE*)(local_buf + pos + sizeof(VertexId) * 2);
+						std::cout << "Kan: it is a LabeledEdge" << std::endl;
+                                                src_label = *(BYTE*)(local_buf + pos + sizeof(VertexId) * 2);
 						dst_label = *(BYTE*)(local_buf + pos + sizeof(VertexId) * 2 + sizeof(BYTE));
 //						data = new LabeledEdge(src, dst, src_label, dst_label);
 						LabeledEdge * data = new LabeledEdge(src, dst, src_label, dst_label);

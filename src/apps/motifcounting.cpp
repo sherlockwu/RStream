@@ -44,9 +44,9 @@ public:
 
 
 void main_nonshuffle(int argc, char **argv) {
-	Engine e(std::string(argv[1]), atoi(argv[2]), 1);
+	//Engine e(std::string(argv[1]), atoi(argv[2]), 1); //adj list
+	Engine e(std::string(argv[1]), atoi(argv[2]), 0);
 	std::cout << Logger::generate_log_del(std::string("finish preprocessing"), 1) << std::endl;
-
 	ResourceManager rm;
 		// get running time (wall time)
 		auto start_motif = std::chrono::high_resolution_clock::now();
@@ -64,6 +64,7 @@ void main_nonshuffle(int argc, char **argv) {
 
 //	unsigned int max_iterations = mPhase.get_max_size() * (mPhase.get_max_size() - 1) / 2;
 	unsigned int max_iterations = mPhase.get_max_size();
+        std::cout << "Kan: max iterations: " << max_iterations << std::endl;
 
 	for(unsigned int i = 1; i < max_iterations; ++i){
 		std::cout << "\n\n" << Logger::generate_log_del(std::string("Iteration ") + std::to_string(i), 1) << std::endl;
@@ -92,7 +93,7 @@ void main_nonshuffle(int argc, char **argv) {
 
 	//delete all generated files
 	std::cout << "\n\n" << Logger::generate_log_del(std::string("cleaning"), 1) << std::endl;
-	e.clean_files();
+	//e.clean_files();
 
 		auto end_motif = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> diff_motif = end_motif - start_motif;
@@ -124,7 +125,6 @@ void main_shuffle(int argc, char **argv) {
 
 //	unsigned int max_iterations = mPhase.get_max_size() * (mPhase.get_max_size() - 1) / 2;
 	unsigned int max_iterations = mPhase.get_max_size();
-
 	for(unsigned int i = 1; i < max_iterations; ++i){
 		std::cout << "\n\n" << Logger::generate_log_del(std::string("Iteration ") + std::to_string(i), 1) << std::endl;
 
