@@ -1,5 +1,6 @@
 CXX=g++
-CFLAGS=-std=c++0x -O3
+#CFLAGS=-std=c++0x -O3
+CFLAGS=-std=c++11 -O3
 CFLAGS+= -Ilib/bliss-0.73/ -Llib/bliss-0.73/
 LIBS=-lbliss -lpthread
 

@@ -9,6 +9,7 @@
 #define CORE_RELATION_PHASE_HPP_
 
 #include "scatter.hpp"
+#include <atomic>
 
 namespace RStream {
 	template<typename InUpdateType, typename OutUpdateType>
@@ -27,6 +28,7 @@ namespace RStream {
 		std::atomic<int> atomic_num_producers;
 //		std::atomic<int> atomic_partition_id;
 		std::atomic<int> atomic_partition_number;
+                std::atomic<int> atomic_counter;
 
 	public:
 //		struct JoinResultType {
@@ -49,7 +51,8 @@ namespace RStream {
 		void atomic_init() {
 			atomic_num_producers = context.num_exec_threads;
 			atomic_partition_number = context.num_partitions;
-		}
+		        atomic_counter = 0;
+                }
 
 		virtual ~RPhase() {}
 
@@ -299,7 +302,7 @@ namespace RStream {
 				io_manager::read_from_file(fd_edge, edge_local_buf, edge_file_size, 0);
                         
                         diff = std::chrono::high_resolution_clock::now() - start;
-	                std::cout << "Kan: read took : " << diff.count() << std::endl;
+	                //std::cout << "Kan: read took : " << diff.count() << std::endl;
                         start = std::chrono::high_resolution_clock::now();
 
 				// build edge hashmap
@@ -317,7 +320,7 @@ namespace RStream {
 
 				build_edge_hashmap(edge_local_buf, edge_hashmap, edge_file_size, vertex_start);
                         diff = std::chrono::high_resolution_clock::now() - start;
-	                std::cout << "Kan: build hashmap took : " << diff.count() << std::endl;
+	                // std::cout << "Kan: build hashmap took : " << diff.count() << std::endl;
                         start = std::chrono::high_resolution_clock::now();
 
 				long valid_io_size = 0;
@@ -429,24 +432,35 @@ namespace RStream {
 		void join_consumer(Update_Stream out_update_stream, global_buffer<OutUpdateType> ** buffers_for_shuffle) {
 			consumer(out_update_stream, buffers_for_shuffle);
 		}
+		
+                //std::atomic<int> atomic_counter = 0;
 
 		// each writer thread generates a join_consumer
 		void consumer(Update_Stream out_update_stream, global_buffer<OutUpdateType> ** buffers_for_shuffle) {
-			int counter = 0;
-
-			while(atomic_num_producers != 0) {
+			int counter = 0;    // Kan: turn to a global atomic threads
+			
+                        while(atomic_num_producers != 0) {
 //				int i = (atomic_partition_id++) % context.num_partitions ;
-				if(counter == context.num_partitions)
+				
+                                ///*original
+                                if(counter == context.num_partitions)
 					counter = 0;
 
 				int i = counter++;
+                                // */ 
+                                
+// Kan
+                                //int i = (atomic_counter++) % context.num_partitions;
+// Kan end
 
 				const char * file_name = (context.filename + "." + std::to_string(i) + ".update_stream_" + std::to_string(out_update_stream)).c_str();
 				std::string file_name_str = (context.filename + "." + std::to_string(i) + ".update_stream_" + std::to_string(out_update_stream));
 
 				global_buffer<OutUpdateType>* g_buf = buffer_manager<OutUpdateType>::get_global_buffer(buffers_for_shuffle, context.num_partitions, i);
 //				g_buf->flush(file_name, i);
-				g_buf->flush(file_name_str, i);
+                                //std::cout << "Flushing out buffer " << i << std::endl;
+                                g_buf->flush(file_name_str, i);
+                                
 			}
 
 			//the last run - deal with all remaining content in buffers

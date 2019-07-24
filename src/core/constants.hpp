@@ -11,6 +11,7 @@
 namespace RStream{
 
 const size_t BUFFER_CAPACITY = 1000000;
+//const size_t BUFFER_CAPACITY = 10000;
 const long IO_SIZE = 16 * 1024 * 1024; // 24M
 const long CHUNK_SIZE = IO_SIZE * 2;
 const long PAGE_SIZE = 4 * 1024; // 4K

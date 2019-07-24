@@ -72,7 +72,7 @@ void main_nonshuffle(int argc, char **argv) {
 		//join on all keys
 		std::cout << "\n" << Logger::generate_log_del(std::string("joining"), 2) << std::endl;
 		up_stream_new = mPhase.join_all_keys_nonshuffle(up_stream);
-		mPhase.delete_upstream(up_stream);
+		//mPhase.delete_upstream(up_stream);
 		mPhase.printout_upstream(up_stream_new);
 
 		//aggregate
@@ -80,16 +80,13 @@ void main_nonshuffle(int argc, char **argv) {
 		agg_stream = agg.aggregate(up_stream_new, mPhase.get_sizeof_in_tuple());
 		agg.printout_aggstream(agg_stream, mPhase.get_sizeof_in_tuple());
 
-//		//print out counts info
-//		std::cout << "\n" << Logger::generate_log_del(std::string("printing"), 2) << std::endl;
-//		agg.printout_aggstream(agg_stream, mPhase.get_sizeof_in_tuple());
-		agg.delete_aggstream(agg_stream);
+		//agg.delete_aggstream(agg_stream);
 
 		up_stream = up_stream_new;
 	}
 	//clean remaining stream files
 	std::cout << std::endl;
-	mPhase.delete_upstream(up_stream);
+	//mPhase.delete_upstream(up_stream);
 
 	//delete all generated files
 	std::cout << "\n\n" << Logger::generate_log_del(std::string("cleaning"), 1) << std::endl;

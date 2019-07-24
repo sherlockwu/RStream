@@ -228,8 +228,9 @@ namespace RStream {
 
 		void flush(std::string& file_name_str, const int i) {
 					std::unique_lock<std::mutex> lock(mutex);
-
-					if(is_full()){
+                                        //std::cout << "this buffer, size: " << count << std::endl;
+					if(is_full()){    //This is bad: only full flush
+                                                //std::cout << "do flush, size: " << count << std::endl;
 						const char * file_name = file_name_str.c_str();
 
 						int perms = O_WRONLY | O_APPEND;
@@ -247,6 +248,7 @@ namespace RStream {
 
 		//				print_thread_info_locked("flushed buffer[" + std::to_string(i) + "] to file " + std::string(file_name) + "\n");
 					}
+                                        //std::cout << "this buffer, size: " << count << " end " << std::endl;
 
 					//debugging info
 		//			if(is_full()){

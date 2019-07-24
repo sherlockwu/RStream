@@ -772,7 +772,7 @@ namespace RStream {
 						std::unordered_set<VertexId> vertices_set;
 						MTuple_join in_update_tuple(sizeof_in_tuple);
 						get_an_in_update(update_local_buf + pos, in_update_tuple, vertices_set);
-						std::cout << in_update_tuple << std::endl;
+						//Kan: std::cout << in_update_tuple << std::endl;
 
 						std::unordered_set<VertexId> set;
 //						set.reserve(vertices_set.size());
@@ -1178,6 +1178,7 @@ namespace RStream {
 
 				int fd_edge = open((context.filename + "." + std::to_string(partition_id)).c_str(), O_RDONLY);
 				assert(fd_edge > 0 );
+                                std::cout << (context.filename + "." + std::to_string(partition_id)).c_str() << std::endl;
 
 				// get edge file size
 				long edge_file_size = io_manager::get_filesize(fd_edge);
@@ -1208,20 +1209,22 @@ namespace RStream {
 
 					io_manager::read_from_file(fd_edge, edge_local_buf, valid_io_size, offset);
 					offset += valid_io_size;
+                                        std::cout << "Kan: " << valid_io_size << std::endl;
 
 					// for each streaming
 					for(long pos = 0; pos < valid_io_size; pos += size_of_unit) {
-						// get an labeled edge
+						// get an labeled edge    where is the label come from for first partition? why labeled edge??????????????? Kan
 						LabeledEdge e = *(LabeledEdge*)(edge_local_buf + pos);
-						std::cout << e << std::endl;
+						//e.src_label = e.target_label = 0;
+                                                //std::cout << "edge: " << e << std::endl;
 
 						std::vector<Element_In_Tuple> out_update_tuple;
 						out_update_tuple.push_back(Element_In_Tuple(e.src, 0, e.src_label));
 						out_update_tuple.push_back(Element_In_Tuple(e.target, 0, e.target_label));
 
+                                                //std::cout << "print something: " << out_update_tuple[0] << out_update_tuple[1] << std::endl;
 						// shuffle on both src and target
 						if(!Pattern::is_automorphism_init(out_update_tuple)){
-                                                        std::cout << out_update_tuple[0] << out_update_tuple[1] << std::endl;
 							insert_tuple_to_buffer(partition_id, out_update_tuple, buffers_for_shuffle);
 						}
 					}
@@ -1350,7 +1353,7 @@ namespace RStream {
 						out_update_tuple.push_back(Element_In_Tuple(e.target, 0, e.target_label));
 
 						// shuffle on both src and target
-						if(!Pattern::is_automorphism_init(out_update_tuple)){
+						if(!Pattern::is_automorphism_init(out_update_tuple)){ // only generate update with target > src 
 							shuffle_on_all_keys(out_update_tuple, buffers_for_shuffle);
 						}
 
